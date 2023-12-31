@@ -1,0 +1,2 @@
+# MySQL-playground
+learning MySQL
