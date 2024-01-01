@@ -4,6 +4,7 @@ import com.example.playgroundmysql.domain.member.entity.Member;
 import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
@@ -22,6 +23,15 @@ public class MemberRepository {
 
     private static final String TABLE = "member";
 
+    private static final RowMapper<Member> ROW_MAPPER = (ResultSet resultSet, int rowNum) -> Member
+            .builder()
+            .id(resultSet.getLong("id"))
+            .email(resultSet.getString("email"))
+            .nickname(resultSet.getString("nickname"))
+            .birthDay(resultSet.getObject("birthday", LocalDate.class))
+            .createdAt(resultSet.getObject("createdAt", LocalDateTime.class))
+            .build();
+
     public Optional<Member> findById(Long id){
         /*
             select *
@@ -31,16 +41,21 @@ public class MemberRepository {
         var sql = String.format("SELECT * FROM %s WHERE id = :id", TABLE);
         var param = new MapSqlParameterSource()
                 .addValue("id", id);
-        RowMapper<Member> rowMapper = (ResultSet resultSet, int rowNum) -> Member
-                .builder()
-                .id(resultSet.getLong("id"))
-                .email(resultSet.getString("email"))
-                .nickname(resultSet.getString("nickname"))
-                .birthDay(resultSet.getObject("birthday", LocalDate.class))
-                .createdAt(resultSet.getObject("createdAt", LocalDateTime.class))
-                .build();
-        Member member = namedJdbcTemplate.queryForObject(sql, param, rowMapper);
+        Member member = namedJdbcTemplate.queryForObject(sql, param, ROW_MAPPER);
         return Optional.ofNullable(member);
+    }
+
+    /*
+       id가 빈 리스트가 되면 id in () 이런 쿼리가 나간다 -> sql 파싱 실패
+
+     */
+    public List<Member> findAllByIdIn(List<Long> ids){
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        var sql = String.format("SELECT * FROM %s WHERE id in (:ids)", TABLE);
+        var params = new MapSqlParameterSource().addValue("ids", ids);
+        return namedJdbcTemplate.query(sql,params,ROW_MAPPER);
     }
     public Member save(Member member){
         /*

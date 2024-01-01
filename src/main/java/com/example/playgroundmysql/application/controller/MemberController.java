@@ -1,4 +1,4 @@
-package com.example.playgroundmysql.controller;
+package com.example.playgroundmysql.application.controller;
 
 import com.example.playgroundmysql.domain.member.dto.MemberDto;
 import com.example.playgroundmysql.domain.member.dto.MemberNicknameHistoryDto;
